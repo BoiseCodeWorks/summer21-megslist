@@ -9,8 +9,11 @@ export class CarsController extends BaseController {
     this.router
       .get('', this.getCars)
       .get('/:id', this.getCar)
-      .use(Auth0Provider.isAuthorized)
+      .use(Auth0Provider.getAuthorizedUserInfo)
       .post('', this.createCar)
+      .post('/:id/comments', this.addComment)
+      // .put('/:carId/comments/:commentId', this.updateComment)
+      .delete('/:carId/comments/:commentId', this.deleteComment)
       .put('/:id', this.updateCar)
       .delete('/:id', this.deleteCar)
   }
@@ -39,6 +42,27 @@ export class CarsController extends BaseController {
       req.body.creatorId = req.account.id
       const car = await carsService.updateCar(id, req.body)
       return res.send(car)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async addComment(req, res, next) {
+    try {
+      // REVIEW NEVER EVER TRUST THE CLIENT
+      req.body.creatorId = req.userInfo.id
+      const result = await carsService.addComment(req.params.id, req.body)
+      res.send(result)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async deleteComment(req, res, next) {
+    try {
+      // REVIEW NEVER EVER TRUST THE CLIENT
+      const result = await carsService.removeComment(req.params.carId, req.params.commentId, req.userInfo.id)
+      res.send(result)
     } catch (error) {
       next(error)
     }
